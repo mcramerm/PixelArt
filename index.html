@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Input Text and Picture</title>
+    <style>
+        h1 {
+            text-align: center;
+        }
+
+        body {
+            font-family: sans-serif;
+        }
+
+        .container {
+            /* width: 500px; */
+            width: 75%;
+            margin: 0 auto;
+        }
+
+        .text-area {
+            /* width: 50%;
+            height: 200px; */
+            align-self: stretch;
+        }
+
+        .table {
+            border-collapse: collapse;
+            /* width: 50%; */
+
+        }
+
+        #table td,
+        #table th {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+
+        }
+
+        #table th {
+            padding-top: 12px;
+            padding-bottom: 12px;
+            text-align: center;
+            background-color: #04AA6D;
+            background-color: #2196F3;
+            color: white;
+        }
+
+        #table tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        #table tr:nth-child(odd) {
+            background-color: #fff;
+        }
+
+
+        .image {
+            /* width: 200px;
+            height: 200px; */
+            width: -webkit-fill-available;
+            /* height: -webkit-fill-available; */
+
+        }
+
+        canvas {
+            width: -webkit-fill-available;
+            height: -webkit-fill-available;
+
+        }
+
+        .slider {
+            width: 100px;
+            width: -webkit-fill-available;
+            margin: 0 auto;
+        }
+
+        #size {
+            width: -webkit-fill-available;
+
+        }
+
+        .grid-container {
+            display: grid;
+            /* grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); */
+            grid-template-columns: minmax(200px, 1fr) minmax(200px, 1fr);
+            grid-auto-rows: minmax(50px, auto);
+            grid-template-areas:
+                'left-header right-header'
+                /* 'left-content right-content'
+                'left-content right-content' */
+                'left-content right-content';
+
+            gap: 10px;
+            /* background-color: #2196F3; */
+            padding: 10px;
+            align-items: start;
+            border: solid;
+
+        }
+
+        .left-header {
+            grid-area: left-header;
+            text-align: center;
+            margin: auto;
+        }
+
+        .right-header {
+            grid-area: right-header;
+            text-align: center;
+            margin: auto;
+        }
+
+        #output-image-header {
+            display: grid;
+            grid-template-columns: auto auto auto;
+            grid-template-columns: minmax(50px, 1fr) minmax(50px, 1fr) minmax(50px, 1fr);
+            width: -webkit-fill-available;
+            align-items: baseline;
+
+        }
+
+        .left-content {
+            grid-area: left-content;
+        }
+
+        .right-content {
+            grid-area: right-content;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Input Text and Picture</h1>
+        <h3>Instructions</h3>
+        <p id="instructions">First, type or copy and paste a list of questions and answers. The questions and answers
+            should be separated by colons. Each question and answer pair should be a new line. Second, upload a picture.
+            Move the slider to determine how pixelated the image should be. The larger the pixel size, the smaller the
+            dimensions when the image is transported to Google Sheets. Finally, hit Submit to create a Pixel Art
+            activity using the questions, answers, and pixelated image.</p>
+        <!-- <label for="text">Text:</label> -->
+
+        <div class="grid-container">
+            <h2 class="left-header">Input</h2>
+            <textarea id="text" class="text-area left-content" rows="10" cols="50"></textarea>
+            <!-- <br /> -->
+            <h2 class="right-header">Output</h2>
+            <table id="table" class="right-content">
+                <tr>
+                    <th>Question</th>
+                    <th>Answer</th>
+                </tr>
+            </table>
+        </div>
+
+
+        <!-- <label for="image">Image:</label>
+        <input type="file" id="image" />
+        <br /> -->
+
+
+
+
+
+
+        <div class="grid-container">
+            <div class="left-header">
+                <label for="fileInput">Image:</label>
+                <input type="file" id="fileInput">
+            </div>
+
+            <img id="original" class="image left-content" />
+            <!-- <img id="copy" /> -->
+
+            <div id="output-image-header" class="right-header">
+                <p>Pixel Size: <span id="sizeLabel"></span></p>
+
+                <div class="slider">
+                    <input type="range" min="1" max="100" value="50" id="size" />
+                    <!-- <label for="size" id="sizeLabel">Size: 50</label> -->
+                </div>
+                <!-- <p>Pixel Size: <span id="sizeLabel"></span></p> -->
+                <p>Dimensions: <span id="copyW">??</span> by <span id="copyH">??</span> </p>
+            </div>
+
+
+
+            <canvas id="canvas" class="right-content"></canvas>
+        </div>
+
+
+
+        <button onclick="submit()">Submit</button>
+        <br />
+    </div>
+    <script>
+        const textBox = document.getElementById('text');
+        var textData; // to be outputted
+        var pixelArray; // to be outputted
+
+        // textBox.onchange = function () {
+        textBox.oninput = function () {
+            var text = document.getElementById("text").value;
+
+            var rows = text.split("\n");
+            var columns = [];
+
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i].split(":");
+                columns.push(row);
+            }
+
+            // console.log(columns);
+            textData = columns;
+
+            var table = document.getElementById("table");
+            table.innerHTML = "";
+            table.innerHTML = "<tr><th>Question</th><th>Answer</th></tr>"
+
+            for (var i = 0; i < columns.length; i++) {
+                var tr = document.createElement("tr");
+                // for (var j = 0; j < columns[i].length; j++) {
+                for (var j = 0; j < 2; j++) {
+                    var td = document.createElement("td");
+                    // td.innerHTML = columns[i][j];
+                    td.innerHTML = columns[i][j] ?? '';
+                    tr.appendChild(td);
+                }
+                table.appendChild(tr);
+            }
+        }
+
+
+        const fileInput = document.getElementById('fileInput');
+        var file; // image file
+
+        const orig = document.getElementById("original");
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+
+        const slider = document.getElementById("size");
+        const sliderLabel = document.getElementById("sizeLabel");
+        const copyW = document.getElementById("copyW");
+        const copyH = document.getElementById("copyH");
+
+        var pixelSize = parseInt(slider.value); // Adjust the pixel size as desired
+        sliderLabel.innerHTML = pixelSize;
+        slider.oninput = function () {
+            pixelSize = parseInt(slider.value);
+            sliderLabel.innerHTML = pixelSize;
+            if (file) {
+                updateOutput();
+            }
+        }
+
+
+        fileInput.addEventListener('change', handleFile);
+
+        // updates image file and creates the original image
+        function handleFile(event) {
+            file = event.target.files[0];
+            var original = new Image();
+            original.src = URL.createObjectURL(file);
+            orig.src = original.src;
+
+            updateOutput();
+        }
+
+        // fills in Canvas with pixelated image
+        // function updateOutput() {
+        //     pixelArray = []; // clear
+
+        //     const reader = new FileReader();
+        //     reader.readAsDataURL(file);
+
+        //     reader.onload = function (e) {
+        //         const image = new Image();
+        //         image.src = e.target.result;
+        //         image.onload = function () {
+        //             // const pixelSize = 100; // Adjust the pixel size as desired
+        //             // console.log('pixelSize', pixelSize);
+
+        //             // Set canvas dimensions to match the image
+        //             canvas.width = image.width;
+        //             canvas.height = image.height;
+        //             // console.log(image.width, image.height);
+        //             copyW.innerHTML = Math.round(image.width / pixelSize);
+        //             copyH.innerHTML = Math.round(image.height / pixelSize);
+
+        //             // Draw the image onto the canvas
+        //             ctx.drawImage(image, 0, 0);
+
+        //             // Pixelize the image
+        //             for (let y = 0; y < canvas.height; y += pixelSize) {
+        //                 let pixRow = []
+        //                 for (let x = 0; x < canvas.width; x += pixelSize) {
+        //                     const pixelData = ctx.getImageData(x, y, pixelSize, pixelSize).data;
+        //                     const averageColor = getAverageColor(pixelData);
+
+        //                     // pixelArray.push(rgbToHex(averageColor.r, averageColor.g, averageColor.b)); // push to pixelArray
+        //                     pixRow.push(rgbToHex(averageColor.r, averageColor.g, averageColor.b)); // push to pixelArray
+
+        //                     ctx.fillStyle = `rgba(${averageColor.r}, ${averageColor.g}, ${averageColor.b}, ${averageColor.a})`;
+        //                     ctx.fillRect(x, y, pixelSize, pixelSize);
+        //                 }
+
+        //                 pixelArray.push(pixRow); // push to pixelArray
+        //                 console.log(pixRow)
+
+        //             }
+        //         };
+
+        //     };
+
+        // }
+        function updateOutput() {
+            pixelArray = []; // clear
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+
+            reader.onload = function (e) {
+                const image = new Image();
+                image.src = e.target.result;
+                image.onload = function () {
+                    // const pixelSize = 100; // Adjust the pixel size as desired
+                    // console.log('pixelSize', pixelSize);
+
+
+                    let w = image.width;
+                    let h = image.height;
+
+                    // //// maybe here we can have JS resize image?
+                    console.log(`w = ${w} and h = ${h}`);
+                    if (w % pixelSize) {
+                        console.log('need to resize');
+                        let maxWidth = pixelSize * Math.floor(w / pixelSize);
+                        console.log("maxWidth ", maxWidth);
+                        // h = Math.round(h * (maxWidth / w));
+                        w = maxWidth;
+                        console.log(`w = ${w} and h = ${h}`);
+                    }
+                    if (h % pixelSize) {
+                        console.log('need to resize');
+                        let maxHeight = pixelSize * Math.floor(h / pixelSize);
+                        console.log("maxHeight ", maxHeight);
+                        // h = Math.round(h * (maxWidth / w));
+                        h = maxHeight;
+                        console.log(`w = ${w} and h = ${h}`);
+                    }
+                    // ////
+
+                    // c.width = w;
+                    // c.height = h;
+
+                    // ctx.drawImage(img1, 0, 0); // draw original image
+                    // ctx.drawImage(img1, 0, 0, w, h); // draw original image, resized if needed
+
+
+
+
+                    // Set canvas dimensions to match the image
+                    canvas.width = w;
+                    canvas.height = h;
+
+
+                    // console.log(image.width, image.height);
+                    copyW.innerHTML = Math.round(w / pixelSize);
+                    copyH.innerHTML = Math.round(h / pixelSize);
+
+                    // Draw the image onto the canvas
+                    // ctx.drawImage(image, 0, 0);
+                    ctx.drawImage(image, 0, 0, w, h);
+                
+
+                    // Pixelize the image
+                    for (let y = 0; y < canvas.height; y += pixelSize) {
+                        let pixRow = []
+                        for (let x = 0; x < canvas.width; x += pixelSize) {
+                            const pixelData = ctx.getImageData(x, y, pixelSize, pixelSize).data;
+                            const averageColor = getAverageColor(pixelData);
+
+                            // pixelArray.push(rgbToHex(averageColor.r, averageColor.g, averageColor.b)); // push to pixelArray
+                            pixRow.push(rgbToHex(averageColor.r, averageColor.g, averageColor.b)); // push to pixelArray
+
+                            ctx.fillStyle = `rgba(${averageColor.r}, ${averageColor.g}, ${averageColor.b}, ${averageColor.a})`;
+                            ctx.fillRect(x, y, pixelSize, pixelSize);
+                        }
+
+                        pixelArray.push(pixRow); // push to pixelArray
+                        console.log(pixRow);
+
+                    }
+
+                    let tempH = orig.height;
+                    console.log("tempH",tempH)
+                    // canvas.height = tempH;
+
+                };
+
+            };
+
+        }
+
+        function getAverageColor(pixelData) {
+            let r = 0, g = 0, b = 0, a = 0;
+
+            // console.log(pixelData);
+            let countDead = 0;
+            // this is an attempt to prevent the black border at the bottom and right side. The border is caused by the fact that the code is sampling outside the edges of image. Outside the edges, all four values are 0, transparent black.
+
+            for (let i = 0; i < pixelData.length; i += 4) {
+                r += pixelData[i];
+                g += pixelData[i + 1];
+                b += pixelData[i + 2];
+                a += pixelData[i + 3];
+                if (pixelData[i + 3] < 1) {
+                    countDead++; // counts when a is < 0, which is when sampling outside the image
+                }
+            }
+
+            // const pixelCount = pixelData.length / 4; /// this works
+            var pixelCount = (pixelData.length - countDead) / 4; // this tries to drop values from outside the image
+            console.log("pixelData.length", pixelData.length, "countDead", countDead, "pixelCount", pixelCount);
+
+            return {
+                r: Math.round(r / pixelCount),
+                g: Math.round(g / pixelCount),
+                b: Math.round(b / pixelCount),
+                a: Math.round(a / pixelCount),
+            };
+        }
+
+
+
+
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+        // this will submit to google sheets
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbwQMZFbyNVltcwu_XCxkP0gdzAEGW_pT19QKWX1jksbYJawUok69RisKyJ6xzT2Qu2J/exec"
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbwmjwh9bmKDY0yM_3Tyn0SjfYbEYLwVha9HEiHf_1QpemgwHL_t8pmyBCTmFjy7ySTX/exec";
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbzhOa6TG9Z9PCEzRPWx4FaInHaa5nw_fHX-bx05-Ow/dev";
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbyHF3LFiKocFUfDLmkJmzijwdsQ2fMjqayBaeASHIRo1LqLWE4ZHYrG9mN8AJ8784w/exec";
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbzBwCjQezf2vyaphq-Na5aNeGZG-YvXac7vjI9YrFP9cCxhgOY0ga8F0nS3yQrCgcJz/exec";
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbz1QhKT2vX2HrMMnNq4OnnybjbRtwG8xSsQ5b4IwqtFNPFXTOLTVcTOKagVoIyew4-3/exec";
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbzSJsjiraurVxLSO9LhN8jEFzsSqGO44IMQ5q6_SwTY864jcOb20iQ-8I_o0F9HfpTn/exec";
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbyA9pMABebsZZZdHLHvXyqQWZ_nHMN3VXJiij0KrqJxOyorKa7Vuw0Cyh9H6eLihYa1/exec";
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbyBdrYeiqts8YC74q4h8aFSAaW5axHhgxgqf55x_0axvKx3X9vDkuUU8ePL56D9bjz1/exec";
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycbzPCvxK_p_F_c3Hdl0WhiRrJislTUWe2IoMUwok3V7baW04-3Dw13EJtHFX4GmjNPZ-/exec";
+        // const scriptUrl = "https://script.google.com/macros/s/AKfycby1KyBstmYIEu7JIB5LiAK6aI-OM6tBsY2KYl-2tNAPtt_JKKCjODw6w8dTW_472FD9/exec";
+        const scriptUrl = "https://script.google.com/macros/s/AKfycbz3G0AvQ-B-_S_UA4shB3NWc-9HVXNw01Dwnc5HnSjd8F11h4MF6-u9psmjSoviH_E7/exec";
+
+        function submit() {
+            // updateOutput();
+            // const url1 = `${url}?type=${myInput.value}`;
+            const url1 = `${scriptUrl}`;
+            // const formData = new FormData();
+            // formData.append('textData', textData);
+            // console.log('formData', formData);
+
+            // fetch(url1, {
+            //     method: 'POST',
+            //     body: formData
+            // })
+            //     .then(res => res.json())
+            //     .then(data => {
+            //         outputer(data, 'POST');
+            //     })
+
+            var data = {
+                text: textData,
+                image: pixelArray
+            }
+
+            console.log(JSON.stringify(data));
+
+            fetch(url1, {
+                method: 'POST',
+                followRedirects: true,
+                muteHttpExceptions: true,
+                contentType: 'application/json',
+                // payload: JSON.stringify(payload),
+                body: JSON.stringify(data),
+                payload: JSON.stringify(data),
+            }).then(res => res.json()).then(result => {
+                outputer(result, 'POST');
+            })
+
+            // fetch(url1, {
+            //     method: 'POST',
+            //     mode: "no-cors", // no-cors, *cors, same-origin
+
+            //     headers: {
+            //         "Content-Type": "application/json",
+            //         "Access-Control-Allow-Origin": "*",
+
+            //         // 'Content-Type': 'application/x-www-form-urlencoded',
+            //     },
+            //     redirect: "follow", // manual, *follow, error
+            //     body: JSON.stringify(data)
+            //     // payload: JSON.stringify(data),
+            // }).then(res => res.json()).then(result => {
+            //     outputer(result, 'POST');
+            // })
+
+            // var xhr = new XMLHttpRequest();
+            // xhr.open("POST", scriptUrl);
+            // xhr.setRequestHeader("Content-Type", "application/json");
+            // xhr.setRequestHeader("Access-Control-Allow-Origin", "*");
+            // xhr.send(JSON.stringify(data));
+        }
+
+        function outputer(vals, val) {
+            console.log('vals', vals, val);
+            console.log(vals['postData']['contents']);
+
+            // results.textContent = JSON.stringify(vals);
+            // results.textContent += JSON.stringify(' Sent Method ' + val);
+        }
+
+    </script>
+</body>
+
+</html>
